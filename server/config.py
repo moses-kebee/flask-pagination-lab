@@ -27,17 +27,22 @@ metadata = MetaData(naming_convention={
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
 })
 
-def create_app(env="dev"):
+db = SQLAlchemy(metadata=metadata)
+migrate = Migrate()
+api = Api()
+
+def create_app(env="dev", register_routes=None):
     app = Flask(__name__)
     app.config.from_object(config_dict[env])
     app.json.compact = False
 
     db.init_app(app)
     migrate.init_app(app, db)
+    
+    # Register routes before initializing api
+    if register_routes:
+        register_routes(api)
+    
     api.init_app(app)
 
     return app
-
-db = SQLAlchemy(metadata=metadata)
-migrate = Migrate()
-api = Api()

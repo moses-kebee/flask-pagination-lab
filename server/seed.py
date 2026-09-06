@@ -1,40 +1,32 @@
 #!/usr/bin/env python3
 
-from random import randint, choice as rc
-
+from app import app
+from config import db
+from models import Book
 from faker import Faker
-import os
-from app import create_app
-from models import db, Book
+import random
 
 fake = Faker()
 
-env = os.getenv("FLASK_ENV", "dev")
-app = create_app(env)
-
-with app.app_context():
-
-    print("Deleting all books...")
-    Book.query.delete()
-
-    fake = Faker()
-
-    print("Creating books...")
-    books = []
-    for i in range(500):
-        title = fake.sentence(nb_words=4)
-        author = fake.name()
-        description = fake.paragraph(nb_sentences=5)
+def seed_books():
+    with app.app_context():
+        # Clear existing books
+        Book.query.delete()
+        print("Deleting all books...")
         
-        book = Book(
-            title=title,
-            author=author,
-            description=description
-        )
+        # Create 500 books
+        books = []
+        for i in range(500):
+            book = Book(
+                title=fake.sentence(nb_words=3).rstrip('.'),
+                author=fake.name(),
+                description=fake.paragraph(nb_sentences=3)
+            )
+            books.append(book)
+        
+        db.session.add_all(books)
+        db.session.commit()
+        print(f"Created {Book.query.count()} books!")
 
-        books.append(book)
-
-    db.session.add_all(books)
-    
-    db.session.commit()
-    print("Complete.")
+if __name__ == '__main__':
+    seed_books()
